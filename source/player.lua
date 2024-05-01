@@ -81,6 +81,8 @@ function Player:update()
 			self.velocity.x = self.speed * seconds
 		elseif crankChange < 0 then
 			self.velocity.x = -self.speed * seconds
+		else
+			self.velocity.x = 0.0
 		end
 		
 		if playdate.buttonJustPressed( playdate.kButtonA ) then
@@ -118,6 +120,16 @@ function Player:update()
 		self:changeState("idle")
 	end
 
+	-- wrap the around the screen
+	local x, y = self:getPosition()
+	local depth = 7
+	if x < 0 - depth then
+		self:moveTo(400 + depth, y)
+	end
+	if x > 400 + depth then
+		self:moveTo(0 - depth, y)
+	end
+	
 	-- NB we have overridden AnimatedSprite:update so we need to manually call this here
 	self:updateAnimation()
 end
