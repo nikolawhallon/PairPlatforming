@@ -43,6 +43,7 @@ function Player:init(position, type)
 	self.score = 0
 	self.weight = 10
 	self.velocity = gmtry.vector2D.new(0, 0)
+	self.on_floor = false
 end
 
 function Player:update()
@@ -68,32 +69,37 @@ function Player:update()
 			self.velocity.x = 0.0
 		end
 		
-		if playdate.buttonJustPressed( playdate.kButtonB ) then
+		-- the commented out part is behavior I want to think more about
+		if playdate.buttonJustPressed( playdate.kButtonB ) and self.on_floor then
 			self.velocity.y = -self.jump
-		elseif playdate.buttonJustReleased( playdate.kButtonB ) and self.velocity.y < 0.0 then
-			self.velocity.y = 0.0
+		--elseif playdate.buttonJustReleased( playdate.kButtonB ) and self.velocity.y < 0.0 then
+		--	self.velocity.y = 0.0
 		end
 	end
 
 	-- TODO balance out a way to do this analog
 	if self.type == "cranky" then
-		if crankChange > 0 then
+		local tolerance = 10
+		if crankChange > tolerance then
 			self.velocity.x = self.speed * seconds
-		elseif crankChange < 0 then
+		elseif crankChange < -tolerance then
 			self.velocity.x = -self.speed * seconds
 		else
 			self.velocity.x = 0.0
 		end
-		
-		if playdate.buttonJustPressed( playdate.kButtonA ) then
+
+		-- the commented out part is behavior I want to think more about
+		if playdate.buttonJustPressed( playdate.kButtonA ) and self.on_floor then
 			self.velocity.y = -self.jump
-		elseif playdate.buttonJustReleased( playdate.kButtonA ) and self.velocity.y < 0.0 then
-			self.velocity.y = 0.0
+		--elseif playdate.buttonJustReleased( playdate.kButtonA ) and self.velocity.y < 0.0 then
+		--	self.velocity.y = 0.0
 		end
 	end
 	
 	local actualX, actualY, collisions, numberOfCollisions = self:moveWithCollisions(self.x + self.velocity.x, self.y + self.velocity.y)
 	
+	-- set this to false here, because we are going to check if this is true by looking at collisions
+	self.on_floor = false
 	for i = 1, numberOfCollisions do
 		local collision = collisions[i]
 	
@@ -101,10 +107,25 @@ function Player:update()
 		assert(collision.sprite:getTag() == TAGS.player)
 		assert(collision.sprite:getTag() == self:getTag())
 	
-		if collision.normal.y == -1 then
-			self.velocity.y = 0.0
-		elseif collision.normal.y == 1 then
-			self.velocity.y = 0.0
+		if collision.other:getTag() == TAGS.bat then
+			if collision.normal.y == -1 then
+				self.velocity.y = -self.jump
+				
+				local b = batIndex(collision.other)
+				assert(b ~= -1)
+				
+				bats[b]:remove()
+				table.remove(bats, b)
+
+			end
+		else
+			-- this ought to be a wallSprite
+			if collision.normal.y == -1 then
+				self.on_floor = true
+				self.velocity.y = 0.0
+			elseif collision.normal.y == 1 then
+				self.velocity.y = 0.0
+			end
 		end
 	end
 

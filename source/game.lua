@@ -20,6 +20,8 @@ TAGS = {
 import "player"
 players = {}
 
+import "bats"
+
 function initGame()
 	gfx.sprite.removeAll()
 
@@ -34,6 +36,8 @@ function initGame()
 	
 	players[1] = Player(gmtry.point.new(100, 120), "cross")
 	players[2] = Player(gmtry.point.new(300, 120), "cranky")
+	
+	initBats()
 end
 
 function updateGame()
@@ -47,6 +51,9 @@ function updateGame()
 				
 		return
 	end
+	
+	-- update
+	updateBats()
 	
 	-- render	
 	gfx.clear()
